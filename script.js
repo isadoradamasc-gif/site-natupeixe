@@ -3,7 +3,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const numeroWhatsapp = "5533997027494";
     const alturaNavbar = document.querySelector('.navbar-natu').offsetHeight;
 
-    
+    // 1. ANIMAÇÃO DE SCROLL
     const elementosAnimados = document.querySelectorAll('.animar-scroll');
 
     function checarScroll() {
@@ -17,41 +17,46 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-   
     checarScroll();
     window.addEventListener('scroll', checarScroll);
 
-
-    
+    // 2. LÓGICA DO CARRINHO E FORMULÁRIO DE ENTREGA
     let carrinho = [];
-    const botoesAdd = document.querySelectorAll('.btn-add-item');
     const resumoContainer = document.getElementById('resumo-pedido');
     const listaCarrinhoContainer = document.getElementById('lista-carrinho');
     const totalPedidoTexto = document.getElementById('total-pedido');
     const btnFecharPedido = document.getElementById('btn-fechar-pedido');
+    
+    // Campos do formulário
+    const selectCidade = document.getElementById('cliente-cidade');
+    const avisoPrazos = document.getElementById('aviso-prazos');
+    const textoPrazo = document.getElementById('texto-prazo');
 
-    botoesAdd.forEach(botao => {
-        botao.addEventListener('click', function () {
-            const linhaProduto = this.closest('.item-produto');
-            const nome = linhaProduto.getAttribute('data-nome');
-            const preco = parseFloat(linhaProduto.getAttribute('data-preco'));
-            const quantidadeInput = linhaProduto.querySelector('.qtd-produto');
-            const quantidade = parseFloat(quantidadeInput.value);
-
-            if (quantidade <= 0 || isNaN(quantidade)) return;
-
-            // Verifica se o item já está no carrinho
-            const itemExistente = carrinho.find(item => item.nome === nome);
-
-            if (itemExistente) {
-                itemExistente.quantidade += quantidade;
-            } else {
-                carrinho.push({ nome, preco, quantidade });
+    // Monitora a seleção de cidade para exibir as regras de entrega na tela
+    if (selectCidade) {
+        selectCidade.addEventListener('change', function() {
+            avisoPrazos.classList.remove('d-none');
+            if (this.value === 'Caratinga') {
+                textoPrazo.innerHTML = `<strong>Regra de Caratinga:</strong> Entregas realizadas de Terça, Quarta e Quinta-feira. Pedidos enviados até as 07:00 da manhã serão entregues no próximo dia útil de entrega.`;
+            } else if (this.value === 'Inhapim') {
+                textoPrazo.innerHTML = `<strong>Regra de Inhapim:</strong> Entregas realizadas apenas na Sexta-feira. O pedido deve ser fechado e enviado até Quinta-feira às 13:00.`;
             }
+        });
+    }
 
-            // Reseta o input visual para 1
-            quantidadeInput.value = 1;
+    // Escuta cliques nos botões dos Combos
+    const botoesCombo = document.querySelectorAll('.btn-add-combo');
+    botoesCombo.forEach(botao => {
+        botao.addEventListener('click', function () {
+            const nome = this.getAttribute('data-nome');
+            const preco = parseFloat(this.getAttribute('data-preco'));
 
+            const itemExistente = carrinho.find(item => item.nome === nome);
+            if (itemExistente) {
+                itemExistente.quantidade += 1;
+            } else {
+                carrinho.push({ nome, preco, quantidade: 1 });
+            }
             atualizarInterfaceCarrinho();
         });
     });
@@ -71,11 +76,11 @@ document.addEventListener("DOMContentLoaded", function () {
             totalGeral += subtotal;
 
             const li = document.createElement('li');
-            li.className = "list-group-item d-flex justify-content-between align-items-center bg-transparent px-0";
+            li.className = "list-group-item d-flex justify-content-between align-items-center bg-transparent px-0 border-bottom py-2";
             li.innerHTML = `
-                <div>
-                    <span class="fw-bold">${item.nome}</span> <br>
-                    <small class="text-muted">${item.quantidade}kg x R$ ${item.preco.toFixed(2).replace('.', ',')}</small>
+                <div style="text-align: left; max-width: 70%;">
+                    <span class="fw-bold text-dark">${item.nome}</span> <br>
+                    <small class="text-muted">${item.quantidade}x Combo(s)</small>
                 </div>
                 <div class="d-flex align-items-center gap-3">
                     <span class="fw-bold text-success">R$ ${subtotal.toFixed(2).replace('.', ',')}</span>
@@ -87,7 +92,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
         totalPedidoTexto.innerText = `R$ ${totalGeral.toFixed(2).replace('.', ',')}`;
 
-   
         document.querySelectorAll('.btn-remover').forEach(btn => {
             btn.addEventListener('click', function () {
                 const index = parseInt(this.getAttribute('data-index'));
@@ -97,35 +101,63 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
+    // Dispara a mensagem estruturada contendo os dados de entrega detalhados
     if (btnFecharPedido) {
         btnFecharPedido.addEventListener('click', function () {
             if (carrinho.length === 0) return;
 
-            let textoMensagem = `*Novo Pedido - NatuPeixe* 🐟%0A%0A`;
+            // Coleta dos novos dados obrigatórios e opcionais
+            const nomeCliente = document.getElementById('cliente-nome').value.trim();
+            const cidadeCliente = document.getElementById('cliente-cidade').value;
+            const ruaCliente = document.getElementById('cliente-rua').value.trim();
+            const numeroCliente = document.getElementById('cliente-numero').value.trim();
+            const bairroCliente = document.getElementById('cliente-bairro').value.trim();
+            const complementoCliente = document.getElementById('cliente-complemento').value.trim();
+
+            // Validação de obrigatoriedade (Nome, Cidade, Rua, Número e Bairro)
+            if (!nomeCliente || !cidadeCliente || !ruaCliente || !numeroCliente || !bairroCliente) {
+                alert("Por favor, preencha todos os campos obrigatórios marcados com (*) antes de enviar seu pedido!");
+                return;
+            }
+
+            let textoMensagem = `*Novo Pedido de Combos - NatuPeixe* 🐟%0A%0A`;
+            
+            // Dados de Identificação do Cliente
+            textoMensagem += `👤 *Cliente:* ${encodeURIComponent(nomeCliente)}%0A`;
+            textoMensagem += `📍 *Cidade:* ${encodeURIComponent(cidadeCliente)}%0A`;
+            
+            // Montagem do Endereço Estruturado na mensagem
+            let enderecoFormatado = `Rua: ${ruaCliente}, Nº: ${numeroCliente} - Bairro: ${bairroCliente}`;
+            if (complementoCliente) {
+                enderecoFormatado += ` (${complementoCliente})`;
+            }
+            textoMensagem += `🏠 *Endereço:* ${encodeURIComponent(enderecoFormatado)}%0A%0A`;
+            
+            textoMensagem += `📦 *Produtos Escolhidos:*%0A`;
             let totalGeral = 0;
 
             carrinho.forEach(item => {
                 const subtotal = item.preco * item.quantidade;
                 totalGeral += subtotal;
-                textoMensagem += `• *${item.nome}*: ${item.quantidade}kg x R$ ${item.preco.toFixed(2).replace('.', ',')} = _R$ ${subtotal.toFixed(2).replace('.', ',')}_%0A`;
+                textoMensagem += `• _${item.quantidade}x_ *${item.nome}* (R$ ${subtotal.toFixed(2).replace('.', ',')})%0A`;
             });
 
-            textoMensagem += `%0A*Total Estimado:* R$ ${totalGeral.toFixed(2).replace('.', ',')}%0A%0A_Gostaria de confirmar a disponibilidade e entrega!_`;
+            textoMensagem += `%0A💰 *Total do Pedido:* R$ ${totalGeral.toFixed(2).replace('.', ',')}%0A%0A`;
+            textoMensagem += `_Estou ciente dos prazos de entrega informados para a minha cidade e gostaria de prosseguir!_`;
 
             const urlWhatsapp = `https://wa.me/${numeroWhatsapp}?text=${textoMensagem}`;
             window.open(urlWhatsapp, '_blank');
         });
     }
 
-
-    
+    // 3. ROLAGEM SUAVE DO MENU
     const LinksMenu = document.querySelectorAll('.navbar-nav a, .btn-pedido');
 
     LinksMenu.forEach(link => {
         link.addEventListener('click', function (e) {
             const targetId = this.getAttribute('href');
             
-            if (targetId.startsWith('#')) {
+            if (targetId && targetId.startsWith('#')) {
                 e.preventDefault();
                 const targetSection = document.querySelector(targetId);
 
@@ -138,9 +170,9 @@ document.addEventListener("DOMContentLoaded", function () {
                     });
 
                     const navbarCollapse = document.getElementById('navbarNatu');
-                    const bsCollapse = bootstrap.Collapse.getInstance(navbarCollapse);
-                    if (navbarCollapse && bsCollapse) {
-                        bsCollapse.hide();
+                    if (navbarCollapse) {
+                        const bsCollapse = bootstrap.Collapse.getInstance(navbarCollapse);
+                        if (bsCollapse) bsCollapse.hide();
                     }
                 }
             }
@@ -167,7 +199,7 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 
-    // Envio do formulário de contato legado para o WhatsApp
+    // 4. FORMULÁRIO DE CONTATO (Institucional)
     const formulario = document.querySelector('form');
     if (formulario) {
         formulario.addEventListener('submit', function (e) {
