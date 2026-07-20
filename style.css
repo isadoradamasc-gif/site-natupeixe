@@ -82,7 +82,7 @@ section {
    BANNER PRINCIPAL (HOME)
    ======================================================== */
 #home {
-    background: url('imagens/1777059569362-99ecdead-6a15-4a78-be60-743656306d55.jpeg') center/cover no-repeat;
+    background: url('./imagens/log.jpeg') center/cover no-repeat;
     color: #ffffff;
     height: 70vh;
     display: flex;
@@ -92,6 +92,7 @@ section {
     text-align: center;
     padding: 20px;
 }
+
 
 #home h1 {
     font-size: 3rem;
